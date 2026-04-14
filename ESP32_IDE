@@ -1,0 +1,93 @@
+#include <ESP32Servo.h>
+
+// --- Pin Definitions ---
+
+// DC Motors (L298N)
+const int ENA = 33; // PWM for Left side
+const int IN1 = 14;
+const int IN2 = 27;
+const int IN3 = 26;
+const int IN4 = 25;
+const int ENB = 32; // PWM for Right side
+
+// Robotic Arm Servos
+const int pinBase    = 13;
+const int pinArm     = 12;
+const int pinGripper = 4;
+
+Servo servoBase;
+Servo servoArm;
+Servo servoGripper;
+
+// PWM Settings
+const int freq = 5000;
+const int ledChannelA = 0;
+const int ledChannelB = 1;
+const int resolution = 8;
+
+void setup() {
+  Serial.begin(115200);
+
+  // Configure DC Motor Pins
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  
+  // Setup PWM for Speed Control
+  ledcSetup(ledChannelA, freq, resolution);
+  ledcSetup(ledChannelB, freq, resolution);
+  ledcAttachPin(ENA, ledChannelA);
+  ledcAttachPin(ENB, ledChannelB);
+
+  // Attach Servos
+  servoBase.attach(pinBase);
+  servoArm.attach(pinArm);
+  servoGripper.attach(pinGripper);
+
+  // Initialize Arm Position
+  servoBase.write(90);
+  servoArm.write(90);
+  servoGripper.write(0); // Closed
+
+  Serial.println("Robot Initialized. Ready for commands...");
+}
+
+// --- Movement Functions ---
+
+void moveForward(int speed) {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  ledcWrite(ledChannelA, speed);
+  ledcWrite(ledChannelB, speed);
+}
+
+void stopRobot() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+  ledcWrite(ledChannelA, 0);
+  ledcWrite(ledChannelB, 0);
+}
+
+// --- Main Loop ---
+// Use this area to integrate your App/Bluetooth/Web Terminal commands
+void loop() {
+  // Example Sequence:
+  moveForward(200);   // Move at ~80% speed
+  delay(2000);
+  
+  stopRobot();
+  delay(1000);
+
+  // Move Arm
+  servoBase.write(45);    // Rotate base
+  delay(500);
+  servoGripper.write(90); // Open gripper
+  delay(1000);
+  
+  while(true); // Stop execution 
+}
